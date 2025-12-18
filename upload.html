@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Upload</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Upload Study Materials</h1>
+  <p class="subtitle">PDF / DOCX / CSV / TXT</p>
+
+  <input type="file" id="file">
+  <input type="text" id="keywords" placeholder="Keywords (optional)">
+  <input type="text" id="lecturer" placeholder="Lecturer Name (optional)">
+  <button onclick="uploadDocument()">Upload</button>
+
+  <div id="uploadResult"></div>
+
+  <hr>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+const backendUrl = "https://chatbot-backend-2nxq.onrender.com";
+
+// 🔒 PROTECT PAGE
+if(sessionStorage.getItem("isAdmin") !== "true"){
+  window.location.href = "index.html";
+}
+
+async function uploadDocument(){
+  const file = document.getElementById("file").files[0];
+  if(!file) return alert("Select a file.");
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("keywords", document.getElementById("keywords").value);
+  formData.append("lecturer", document.getElementById("lecturer").value);
+
+  const res = await fetch(`${backendUrl}/upload`, {
+    method: "POST",
+    body: formData
+  });
+
+  const result = await res.json();
+  document.getElementById("uploadResult").innerHTML =
+    result.ok ? "<b>Upload successful</b>" : `<b>Error:</b> ${result.error}`;
+}
+
+function logout(){
+  sessionStorage.removeItem("isAdmin");
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
