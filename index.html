@@ -63,6 +63,7 @@ function formatAnswerText(text) {
 /* =============================
    ASK QUESTION
 ============================= */
+
 async function askQuestion() {
   const question = document.getElementById("question").value.trim();
   if (!question) return alert("Please type a question.");
@@ -70,7 +71,7 @@ async function askQuestion() {
   const res = await fetch(`${backendUrl}/ask`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question })
+    body: JSON.stringify({ question, top_k: 3 }) // request 3 results
   });
 
   const data = await res.json();
@@ -82,22 +83,21 @@ async function askQuestion() {
     return;
   }
 
-  // Show ONLY the best answer (clean UI)
-  const m = data.matches[0];
-
-  answerDiv.innerHTML = `
-    <div class="card">
-      <div class="card-title">Answer</div>
+  // Loop through all matches
+  data.matches.forEach((m, index) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-title">Answer ${index + 1}</div>
       <div class="card-meta"><b>Lecturer:</b> ${m.lecturer || "Unknown"}</div>
       <div class="card-meta"><b>Source:</b> ${m.source || "Unknown"}</div>
-
       <div class="answer-text">
         ${formatAnswerText(m.snippet)}
       </div>
-
       ${m.file_url ? `<a class="file-link" href="${m.file_url}" target="_blank">Open File</a>` : ""}
-    </div>
-  `;
+    `;
+    answerDiv.appendChild(card);
+  });
 }
 </script>
 
