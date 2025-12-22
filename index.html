@@ -26,13 +26,49 @@
 <script>
 const backendUrl = "https://chatbot-backend-2nxq.onrender.com";
 
+/* =============================
+   FORMAT ANSWER TEXT (READABLE)
+============================= */
+function formatAnswerText(text) {
+  if (!text) return "";
+
+  // Escape HTML (security)
+  let safeText = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Numbered headings (e.g. 1. Basic Description)
+  safeText = safeText.replace(
+    /(^|\n)(\d+\.\s+[A-Z][^\n]+)/g,
+    '<h3>$2</h3>'
+  );
+
+  // Subheadings (ending with :)
+  safeText = safeText.replace(
+    /([A-Z][A-Za-z\s]+:)/g,
+    '<h4>$1</h4>'
+  );
+
+  // Split into paragraphs
+  safeText = safeText
+    .split(/\n{2,}/)
+    .map(p => `<p>${p.trim()}</p>`)
+    .join("");
+
+  return safeText;
+}
+
+/* =============================
+   ASK QUESTION
+============================= */
 async function askQuestion() {
   const question = document.getElementById("question").value.trim();
   if (!question) return alert("Please type a question.");
 
   const res = await fetch(`${backendUrl}/ask`, {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question })
   });
 
@@ -45,18 +81,24 @@ async function askQuestion() {
     return;
   }
 
-  data.matches.forEach((m,i)=>{
-    answerDiv.innerHTML += `
-      <div class="card">
-        <div class="card-title">Answer ${i+1}</div>
-        <div class="card-meta"><b>Lecturer:</b> ${m.lecturer || "Unknown"}</div>
-        <div class="card-meta"><b>Source:</b> ${m.source || "Unknown"}</div>
-        <p>${m.snippet}</p>
-        ${m.file_url ? `<a class="file-link" href="${m.file_url}" target="_blank">Open File</a>` : ""}
+  // Show ONLY the best answer (clean UI)
+  const m = data.matches[0];
+
+  answerDiv.innerHTML = `
+    <div class="card">
+      <div class="card-title">Answer</div>
+      <div class="card-meta"><b>Lecturer:</b> ${m.lecturer || "Unknown"}</div>
+      <div class="card-meta"><b>Source:</b> ${m.source || "Unknown"}</div>
+
+      <div class="answer-text">
+        ${formatAnswerText(m.snippet)}
       </div>
-    `;
-  });
+
+      ${m.file_url ? `<a class="file-link" href="${m.file_url}" target="_blank">Open File</a>` : ""}
+    </div>
+  `;
 }
 </script>
+
 </body>
 </html>
